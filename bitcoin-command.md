@@ -210,7 +210,7 @@
 #### Create a Raw transaction
 
 - `bitcoin-cli -testnet listunspent`
-    ```
+    ```json
     [
         {
             "txid": "3acf7a4b39f26818de6543fe9b1fe7770cf82bcb14a817c709d50dafca4f526e",
@@ -228,7 +228,7 @@
             ],
             "safe": true
         },
-        ...
+        
     ]
     ```
 
@@ -275,7 +275,7 @@
         }
     ]
   }
-```
+
 
 - `bitcoin-cli -testnet signrawtransactionwithwallet $rawtxhex` 签名交易
 ```json
