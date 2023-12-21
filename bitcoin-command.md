@@ -13,6 +13,11 @@
     prune=1000 # file size max if value > 500
     minrelaytxfee=0.00005
     limitfreerelay=0
+    alertnotify=myemailscript.sh "Alert: %s"
+    # blocksonly=1
+    mintxfee=0.001
+    txconfirmtarget=1
+    fallbackfee=0.00001
     dbcache=150
     maxmempool=150
     maxorphantx=10
@@ -165,6 +170,123 @@
     ```
 - `bitcoin-cli -testnet importmulti '[{"desc": "wpkh([9881a23b/84h/1h/0h/0/0]02c8e635189af1f051d8c49dae65395056344e87041e7680d85d0ecc78915dcd92)#myj60eqx", "timestamp": "now", "watchonly": true}]'` 导入descriptor
   
+#### Send Coins to address
 
+- `bitcoin-cli -testnet sendtoaddress 2Mz87LWo5GgbHVZhx48nxZQfCh84opc9rzn 0.001` 发送 `0.001` btc，并返回txid，需要在 `bitcoin.conf` 中配置 `fallbackfee=0.00001` 才能成功，条目 blocksonly=1 将导致您的 bitcoind 无法估算费用
+    `# fea4e9861a458087c0fd5da03c6b63a91e8cfacc6f8658b9d7e17114bd5c2f70` 
 
+- `bitcoin-cli -testnet gettransaction fea4e9861a458087c0fd5da03c6b63a91e8cfacc6f8658b9d7e17114bd5c2f70` 查看交易信息
+    ```json
+    {
+        "amount": -0.00100000,
+        "fee": -0.00036800,
+        "confirmations": 0,
+        "trusted": false,
+        "txid": "fea4e9861a458087c0fd5da03c6b63a91e8cfacc6f8658b9d7e17114bd5c2f70",
+        "wtxid": "fea4e9861a458087c0fd5da03c6b63a91e8cfacc6f8658b9d7e17114bd5c2f70",
+        "walletconflicts": [
+        ],
+        "time": 1703156301,
+        "timereceived": 1703156301,
+        "bip125-replaceable": "yes",
+        "details": [
+            {
+            "address": "2Mz87LWo5GgbHVZhx48nxZQfCh84opc9rzn",
+            "category": "send",
+            "amount": -0.00100000,
+            "vout": 0,
+            "fee": -0.00036800,
+            "abandoned": false
+            }
+        ],
+        "hex": "02000000024fed174daf693949672b8ba07ce231e239b44dd1a03ac854c925d9c8729251e2010000006a473044022001dbf9e084301ea350c7eb47ecd4f66715802341784cf2b3071032c3ab7d629802203bf92eea115b54e024f23f92d0f4c84c1b3c293cf6bf85d64e3a46b30bdfc7fe012103f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3fdffffff98c9c9eba3b96799acc765757dd2128b438376b3e858bbcebe47c5dc777fa20d010000006a47304402206e173428fcada013ef72f75c5727d7da5be035a0bf1ed368e005d73d9f2094e10220531beee208968aceb28afd9aecc619ccbbd5c0369c26aab72add6005434c17ee012103f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3fdffffff02a08601000000000017a9144b706aa73844328b09f8f70a8c45a5e89c48b08387e0f600000000000017a91431e2f7ae4b1e95ca8af8dd27b0cc905cc5e4f50b870cd02600",
+        "lastprocessedblock": {
+            "hash": "000000000000001c1a5b9a5a9b6c2f58a8cd3d73647f94398b456e3022a1d575",
+            "height": 2543629
+        }
+    }
+    ```
 
+#### Create a Raw transaction
+
+- `bitcoin-cli -testnet listunspent`
+    ```
+    [
+        {
+            "txid": "3acf7a4b39f26818de6543fe9b1fe7770cf82bcb14a817c709d50dafca4f526e",
+            "vout": 0,
+            "address": "mvdZMfdZVLPogTfM35pDZNapx52TGwJ7Eu",
+            "label": "--addresstype",
+            "scriptPubKey": "76a914a5c9a6ab6f08980063f39e7bae1e838d50dddd4488ac",
+            "amount": 0.00100000,
+            "confirmations": 3,
+            "spendable": true,
+            "solvable": true,
+            "desc": "pkh([9881a23b/44h/1h/0h/0/0]03f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3)#mgvmu7fm",
+            "parent_descs": [
+            "pkh(tpubD6NzVbkrYhZ4WdbQsDoaZZSvE18CuK3QoUCafEWZ8jFjdCgYyYK6dqQq3d7ygdcFQHgkgubbmVtcvUC5mPwpAGsfN2emgE8uwLDrXSNxk4G/44h/1h/0h/0/*)#phn2dj78"
+            ],
+            "safe": true
+        },
+        ...
+    ]
+    ```
+
+- `utxo_txid="da5a6dcaef07437ced41c5f5f6363790b5ceb71170003dc876b325f6ba9dfaa6"`
+-  `utxo_vout=1`
+-  `recipient="2Mz87LWo5GgbHVZhx48nxZQfCh84opc9rzn"`
+
+- `rawtxhex=$(bitcoin-cli -testnet createrawtransaction '''[ { "txid": "'$utxo_txid'", "vout": '$utxo_vout' } ]''' '''{ "'$recipient'": 0.00005 }''')`
+- `echo $rawtxhex`
+  `0200000001a6fa9dbaf625b376c83d007011b7ceb5903736f6f5c541ed7c4307efca6d5ada0100000000fdffffff01881300000000000017a9144b706aa73844328b09f8f70a8c45a5e89c48b0838700000000`
+
+- `bitcoin-cli -testnet decoderawtransaction $rawtxhex` # 验证交易
+  ```json
+  {
+    "txid": "0192d9e7fa69788b5867de7e0ee1fa8c6198e0d80fa411f5fcd8ccce82c17f86",
+    "hash": "0192d9e7fa69788b5867de7e0ee1fa8c6198e0d80fa411f5fcd8ccce82c17f86",
+    "version": 2,
+    "size": 83,
+    "vsize": 83,
+    "weight": 332,
+    "locktime": 0,
+    "vin": [
+        {
+        "txid": "da5a6dcaef07437ced41c5f5f6363790b5ceb71170003dc876b325f6ba9dfaa6",
+        "vout": 1,
+        "scriptSig": {
+            "asm": "",
+            "hex": ""
+        },
+        "sequence": 4294967293
+        }
+    ],
+    "vout": [
+        {
+        "value": 0.00005000,
+        "n": 0,
+        "scriptPubKey": {
+            "asm": "OP_HASH160 4b706aa73844328b09f8f70a8c45a5e89c48b083 OP_EQUAL",
+            "desc": "addr(2Mz87LWo5GgbHVZhx48nxZQfCh84opc9rzn)#gmmyhmsp",
+            "hex": "a9144b706aa73844328b09f8f70a8c45a5e89c48b08387",
+            "address": "2Mz87LWo5GgbHVZhx48nxZQfCh84opc9rzn",
+            "type": "scripthash"
+        }
+        }
+    ]
+  }
+```
+
+- `bitcoin-cli -testnet signrawtransactionwithwallet $rawtxhex` 签名交易
+```json
+  {
+    "hex": "02000000000101a6fa9dbaf625b376c83d007011b7ceb5903736f6f5c541ed7c4307efca6d5ada0100000000fdffffff01881300000000000017a9144b706aa73844328b09f8f70a8c45a5e89c48b083870247304402207bebe7203a0c1f7c1d1ff5e14d8f6116e1d90d8faaeed6d84a8de6f78477b19302202e7dfe636bddeaa4124630db7542d6745dd8013a5ce701fd4e5ed764b2d92901012102c8e635189af1f051d8c49dae65395056344e87041e7680d85d0ecc78915dcd9200000000",
+    "complete": true
+  }
+```
+
+- `signedtx="02000000000101a6fa9dbaf625b376c83d007011b7ceb5903736f6f5c541ed7c4307efca6d5ada0100000000fdffffff01881300000000000017a9144b706aa73844328b09f8f70a8c45a5e89c48b083870247304402207bebe7203a0c1f7c1d1ff5e14d8f6116e1d90d8faaeed6d84a8de6f78477b19302202e7dfe636bddeaa4124630db7542d6745dd8013a5ce701fd4e5ed764b2d92901012102c8e635189af1f051d8c49dae65395056344e87041e7680d85d0ecc78915dcd9200000000"`
+  
+- `bitcoin-cli -testnet sendrawtransaction $signedtx` # 发送交易
+  `# 0192d9e7fa69788b5867de7e0ee1fa8c6198e0d80fa411f5fcd8ccce82c17f86`
+  
