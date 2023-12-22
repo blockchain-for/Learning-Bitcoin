@@ -325,5 +325,96 @@
 - `echo $raw_tx_id`
   `2c92ee1c7274c5e55f19c103634b46e6d3726c11aaeb4f683e720a875d28dbd2`
 
+- `curl --user user:password --data-binary '{"jsonrpc": "1.0", "id":"curltest", "method": "getmininginfo", "params": [] }' -H 'content-type: text/plain;' http://127.0.0.1:18332/` 用 `curl` 代替 `bitcoin-cli -testnet getmininginfo`
+  
+#### Sending Coins with Automated Raw Transactions
 
+- `recipient=mzoQJFgc5HUhAfqWjGcLsyUzRbxFV3SHAN`
+- `unfinishedtx=$(bitcoin-cli -testnet -named createrawtransaction inputs='''[]''' outputs='''{"'$recipient'": 0.0002}''')`
+- `bitcoin-cli -named -testnet fundrawtransaction hexstring=$unfinishedtx`
+  ```json
+  {
+    "hex": "02000000011fb0750c8bed5e0ff80efd9dc4f058f6ae352f9126690ae97a5afdfe23e60db00000000000fdffffff02204e0000000000001976a914d386c07a3bdb74ee891b220242cbac908a713fb288ac14ff0000000000001976a914dd4bf95e93b0b9cb857157749bc3d1717a73a8ae88ac00000000",
+    "fee": 0.00014700,
+    "changepos": 1
+    }
+  ```
+- `rawtxhex3="02000000011fb0750c8bed5e0ff80efd9dc4f058f6ae352f9126690ae97a5afdfe23e60db00000000000fdffffff02204e0000000000001976a914d386c07a3bdb74ee891b220242cbac908a713fb288ac14ff0000000000001976a914dd4bf95e93b0b9cb857157749bc3d1717a73a8ae88ac00000000"` or
+- `rawtxhex3=$(bitcoin-cli -named -testnet fundrawtransaction hexstring=$unfinishedtx | jq -r '.hex')`
+- `bitcoin-cli -named -testnet decoderawtrawtransaction hexstring=$rawtxhex3` 
+    ```json
+  {
+    "txid": "8c199fd594e06021db30c0ed4e6bf1e74a475204c8df6636e69d19696b53bdd3",
+    "hash": "8c199fd594e06021db30c0ed4e6bf1e74a475204c8df6636e69d19696b53bdd3",
+    "version": 2,
+    "size": 119,
+    "vsize": 119,
+    "weight": 476,
+    "locktime": 0,
+    "vin": [
+        {
+        "txid": "b00de623fefd5a7ae90a6926912f35aef658f0c49dfd0ef80f5eed8b0c75b01f",
+        "vout": 0,
+        "scriptSig": {
+            "asm": "",
+            "hex": ""
+        },
+        "sequence": 4294967293
+        }
+    ],
+    "vout": [
+        {
+        "value": 0.00020000,
+        "n": 0,
+        "scriptPubKey": {
+            "asm": "OP_DUP OP_HASH160 d386c07a3bdb74ee891b220242cbac908a713fb2 OP_EQUALVERIFY OP_CHECKSIG",
+            "desc": "addr(mzoQJFgc5HUhAfqWjGcLsyUzRbxFV3SHAN)#zhpjn3w5",
+            "hex": "76a914d386c07a3bdb74ee891b220242cbac908a713fb288ac",
+            "address": "mzoQJFgc5HUhAfqWjGcLsyUzRbxFV3SHAN",
+            "type": "pubkeyhash"
+        }
+        },
+        {
+        "value": 0.00065300,
+        "n": 1,
+        "scriptPubKey": {
+            "asm": "OP_DUP OP_HASH160 dd4bf95e93b0b9cb857157749bc3d1717a73a8ae OP_EQUALVERIFY OP_CHECKSIG",
+            "desc": "addr(n1h4eDoRG1X341LUw3nZUrACxC7ZE6Ee1L)#2w0cruau",
+            "hex": "76a914dd4bf95e93b0b9cb857157749bc3d1717a73a8ae88ac",
+            "address": "n1h4eDoRG1X341LUw3nZUrACxC7ZE6Ee1L",
+            "type": "pubkeyhash"
+        }
+        }
+    ]
+  }
+  ```
+
+- `bitcoin-cli -named -testnet getaddressinfo address=n1h4eDoRG1X341LUw3nZUrACxC7ZE6Ee1L`  检查收零地址是否属于自己，`ismine` 中的值是 `true` 
+  ```json
+  {
+    "address": "n1h4eDoRG1X341LUw3nZUrACxC7ZE6Ee1L",
+    "scriptPubKey": "76a914dd4bf95e93b0b9cb857157749bc3d1717a73a8ae88ac",
+    "ismine": true,
+    "solvable": true,
+    "desc": "pkh([9881a23b/44h/1h/0h/1/3]0321bc3415ed8eaa40c805781d6fc1cb5abf14c2768823078456a865c634d30ee1)#yfs9xxhx",
+    "parent_desc": "pkh([9881a23b/44h/1h/0h]tpubDCh4imKVpYNmR94RwQmCMnyJGqz6Cyb1tDqJM3kgeYjHtqWvAooCoP1zfRkVRT3Z5iSdbjLEG1B63vdM2U4LRUx5bZehrzXvHWx8Xkzzh9b/1/*)#eeyeg0yd",
+    "iswatchonly": false,
+    "isscript": false,
+    "iswitness": false,
+    "pubkey": "0321bc3415ed8eaa40c805781d6fc1cb5abf14c2768823078456a865c634d30ee1",
+    "iscompressed": true,
+    "ischange": true,
+    "timestamp": 1703084396,
+    "hdkeypath": "m/44h/1h/0h/1/3",
+    "hdseedid": "0000000000000000000000000000000000000000",
+    "hdmasterfingerprint": "9881a23b",
+    "labels": [
+    ]
+  }
+  ```
+- `signedtx3=$(bitcoin-cli -named -testnet signrawtransactionwithwallet hexstring=$rawtxhex3 | jq -r '.hex')`
+- `txid_3=$(bitcoin-cli -named -testnet sendrawtransaction hexstring=$signedtx3)`
+- `echo $txid_3`
+  `8b9dd66c999966462a3d88d6ac9405d09e2aa409c0aa830bdd08dbcbd34a36fa`
+- `bitcoin-cli -testnet listunspent`
 
