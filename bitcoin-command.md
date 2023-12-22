@@ -418,3 +418,13 @@
   `8b9dd66c999966462a3d88d6ac9405d09e2aa409c0aa830bdd08dbcbd34a36fa`
 - `bitcoin-cli -testnet listunspent`
 
+#### Creating a SegWit Transaction
+
+- `bitcoin-cli -named -testnet getnewaddress address_type=p2sh-segwit` 创建 `p2sh-segwit` 地址，2开始表示测试网，3开头表示主网，这是由于有些地址不能发送到最新的 SegWit 地址
+  `2MxVqMTpjZ4h46tzQZKoM9J4iEyNqeXeQ93`
+- `bitcoin-cli -testnet getnewaddress` 创建默认的 Bech32 SegWit 地址, 测试网以 `tb1`开头，主网以 `bc1`开头
+  `tb1qqapg4e009c4leghl0fzuxr22g7kueea36v333s`
+- `bitcoin-cli -testnet listaddressgroupings`
+- `bitcoin-cli -testnet sendtoaddress tb1qqapg4e009c4leghl0fzuxr22g7kueea36v333s 0.0007`
+  `bc4ce37c70609d54ac3fbc7238b26bc24dc4fafdd81e9e3f3d0cb58592f7f64c`
+  
