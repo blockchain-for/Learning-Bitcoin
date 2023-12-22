@@ -233,8 +233,8 @@
     ```
 
 - `utxo_txid="da5a6dcaef07437ced41c5f5f6363790b5ceb71170003dc876b325f6ba9dfaa6"`
--  `utxo_vout=1`
--  `recipient="2Mz87LWo5GgbHVZhx48nxZQfCh84opc9rzn"`
+- `utxo_vout=1`
+- `recipient="2Mz87LWo5GgbHVZhx48nxZQfCh84opc9rzn"`
 
 - `rawtxhex=$(bitcoin-cli -testnet createrawtransaction '''[ { "txid": "'$utxo_txid'", "vout": '$utxo_vout' } ]''' '''{ "'$recipient'": 0.00005 }''')`
 - `echo $rawtxhex`
@@ -290,3 +290,40 @@
 - `bitcoin-cli -testnet sendrawtransaction $signedtx` # 发送交易
   `# 0192d9e7fa69788b5867de7e0ee1fa8c6198e0d80fa411f5fcd8ccce82c17f86`
   
+#### Creating a Raw Transaction with Named Arguments
+
+- `bitcoin-cli -named getbalance minconf=1`
+
+- `utxo_txid=$(bitcoin-cli -testnet listunspent | jq -r '.[0] | .txid')`
+- `utxo_vout=$(bitcoin-cli -testnet listunspent | jq -r '.[0] | .vout')`
+- `recipient="2Mz87LWo5GgbHVZhx48nxZQfCh84opc9rzn"`
+- `rawtxhex=$(bitcoin-cli -testnet -named createrawtransaction inputs='''[ { "txid": "'$utxo_txid'", "vout": '$utxo_vout' } ]''' outputs='''{ "'$recipient'": 0.00001 }''')`
+  `02000000016e524fcaaf0dd509c717a814cb2bf80c77e71f9bfe4365de1868f2394b7acf3a0000000000fdffffff01e80300000000000017a9144b706aa73844328b09f8f70a8c45a5e89c48b0838700000000`
+  
+- `bitcoin-cli -named -testnet decoderawtransaction hexstring=$rawtxhex` 
+
+- `signedtx=$(bitcoin-cli -named -testnet signrawtransactionwithwallet hexstring=$rawtxhex | jq -r '.hex')`
+
+- `bitcoin-cli -named -testnet sendrawtransaction hexstring=$signedtx`
+    `bef6ea45ce55df6a38c744e405af72c6f8ec2a97de5798e7f218618ccc495e36`
+
+#### Sending Coins with a Raw transaction
+
+- `changeaddress=$(bitcoin-cli -testnet getrawchangeaddress legacy)`
+- `bitcoin-cli -testnet getrawchangeaddress`
+  `tb1q7ka2hsd0m58mxrqc9zs36nxqwwhmmmpqdngcjv`
+- `echo $changeaddress`
+  `mzoQJFgc5HUhAfqWjGcLsyUzRbxFV3SHAN`
+- `echo $recipient`
+- `utxo_txid_1=$(bitcoin-cli -testnet listunspent | jq -r '.[0] | .txid')`
+- `utxo_vout_1=$(bitcoin-cli -testnet listunspent | jq -r '.[0] | .vout')`
+- `utxo_txid_2=$(bitcoin-cli -testnet listunspent | jq -r '.[2] | .txid')`
+- `utxo_vout_2=$(bitcoin-cli -testnet listunspent | jq -r '.[2] | .vout')`
+- `rawtxhex2=$(bitcoin-cli -named -testnet createrawtransaction inputs='''[ { "txid": "'$utxo_txid_1'", "vout": '$utxo_vout_1' }, { "txid": "'$utxo_txid_2'", "vout": '$utxo_vout_2' } ]''' outputs='''{ "'$recipient'": 0.00102, "'$changeaddress'": 0.00001 }''')`
+- `signedtx2=$(bitcoin-cli -named -testnet signrawtransactionwithwallet hexstring=$rawtxhex2 | jq -r '.hex')`
+- `raw_tx_id=$(bitcoin-cli -named -testnet sendrawtransaction hexstring=$signedtx2)`
+- `echo $raw_tx_id`
+  `2c92ee1c7274c5e55f19c103634b46e6d3726c11aaeb4f683e720a875d28dbd2`
+
+
+
