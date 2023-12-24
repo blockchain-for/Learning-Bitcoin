@@ -52,6 +52,10 @@
 - `bitcoin-cli -testnet getnewaddress` 生成地址（bech32，Native SegWit地址，也叫P2WPKH）
     
     `# tb1qxeqhem3z6gwatqr2a3ah03pyqgamq4lsdkrsh4` 测试一般以 `tb1` 开头，主网以 `bc1` 开头
+- `bitcoin-cli createwallet "mainwallet"` 创建主网钱包
+- `bitcoin-cli getnewaddress`
+  `bc1qdzr25fzawj55jkzdg86kh8l7sdg7pcdcl95afk`
+- `bitcoin-cli getaddressinfo bc1qdzr25fzawj55jkzdg86kh8l7sdg7pcdcl95afk`
     
 - `bitcoin-cli -testnet getnewaddress --addresstype legacy` 创建早期`legacy` （P2PKH)格式地址，测试网一般是 `m` 或 `n` 开头，主网以 `1` 开头，P2SH地址一般是 `3` 开头
     
@@ -315,12 +319,15 @@
 - `echo $changeaddress`
   `mzoQJFgc5HUhAfqWjGcLsyUzRbxFV3SHAN`
 - `echo $recipient`
+  
 - `utxo_txid_1=$(bitcoin-cli -testnet listunspent | jq -r '.[0] | .txid')`
 - `utxo_vout_1=$(bitcoin-cli -testnet listunspent | jq -r '.[0] | .vout')`
 - `utxo_txid_2=$(bitcoin-cli -testnet listunspent | jq -r '.[2] | .txid')`
 - `utxo_vout_2=$(bitcoin-cli -testnet listunspent | jq -r '.[2] | .vout')`
+- 
 - `rawtxhex2=$(bitcoin-cli -named -testnet createrawtransaction inputs='''[ { "txid": "'$utxo_txid_1'", "vout": '$utxo_vout_1' }, { "txid": "'$utxo_txid_2'", "vout": '$utxo_vout_2' } ]''' outputs='''{ "'$recipient'": 0.00102, "'$changeaddress'": 0.00001 }''')`
 - `signedtx2=$(bitcoin-cli -named -testnet signrawtransactionwithwallet hexstring=$rawtxhex2 | jq -r '.hex')`
+  
 - `raw_tx_id=$(bitcoin-cli -named -testnet sendrawtransaction hexstring=$signedtx2)`
 - `echo $raw_tx_id`
   `2c92ee1c7274c5e55f19c103634b46e6d3726c11aaeb4f683e720a875d28dbd2`
@@ -428,3 +435,18 @@
 - `bitcoin-cli -testnet sendtoaddress tb1qqapg4e009c4leghl0fzuxr22g7kueea36v333s 0.0007`
   `bc4ce37c70609d54ac3fbc7238b26bc24dc4fafdd81e9e3f3d0cb58592f7f64c`
   
+#### Watching for Stuck Transactions
+
+- `bitcoin-cli -testnet -named gettransaction txid=8c199fd594e06021db30c0ed4e6bf1e74a475204c8df6636e69d19696b53bdd3`
+
+#### Resending a Transaction with RBF
+
+- `rawtxhex=$(bitcoin-cli -named createrawtransaction inputs='''[ { "txid": "'$utxo_txid'", "vout": '$utxo_vout', "sequence": 1 } ]''' outputs='''{ "'$recipient'": 0.00007658, "'$changeaddress'": 0.00000001 }''')` adding a sequence variable and value is `1` to your UTXO inputs:
+- `signedtx=$(bitcoin-cli -named signrawtransactionwithwallet hexstring=$rawtxhex | jq -r '.hex')` 重新签名交易
+- `bitcoin-cli -named sendrawtransaction hexstring=$signedtx` 重新发送交易
+  
+#### Replace a Transaction the Easy Way: By bumpfee
+
+- `bitcoin-cli -testnet -named bumpfee txid=8c199fd594e06021db30c0ed4e6bf1e74a475204c8df6636e69d19696b53bdd3`
+  
+
