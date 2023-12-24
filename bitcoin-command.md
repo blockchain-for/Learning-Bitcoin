@@ -449,4 +449,12 @@
 
 - `bitcoin-cli -testnet -named bumpfee txid=8c199fd594e06021db30c0ed4e6bf1e74a475204c8df6636e69d19696b53bdd3`
   
+#### Funding a Transaction with CPFP
 
+- `bitcoin-cli -testnet getrawmempool` 查看当前mempool中的交易
+- `bitcoin-cli getrawtransaction bc4ce37c70609d54ac3fbc7238b26bc24dc4fafdd81e9e3f3d0cb58592f7f64c true` 查找未确认交易的 txid 和 vout，找到与您的地址匹配的对象
+- `rawtxhex=$(bitcoin-cli -testnet -named createrawtransaction inputs='''[ { "txid": "'$utxo_txid'", "vout": '$utxo_vout' } ]''' outputs='''{ "'$recipient2'": 0.03597 }''')` 使用您的未确认交易作为输入创建一个原始交易，将交易费用加倍（或更多）。
+
+- `signedtx=$(bitcoin-cli -testnet -named signrawtransaction hexstring=$rawtxhex | jq -r '.hex')` 签名交易
+- `bitcoin-cli -testnet -named sendrawtransaction hexstring=$signedtx` 发送交易
+- 
