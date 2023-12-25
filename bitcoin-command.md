@@ -457,4 +457,151 @@
 
 - `signedtx=$(bitcoin-cli -testnet -named signrawtransaction hexstring=$rawtxhex | jq -r '.hex')` 签名交易
 - `bitcoin-cli -testnet -named sendrawtransaction hexstring=$signedtx` 发送交易
-- 
+  
+#### Create a Multisig Address
+
+- `address1=$(bitcoin-cli getnewaddress)` on machine1
+- `address2=$(bitcoin-cli getnewaddress)` on machine2
+- `echo $address1`
+  `tb1qxeqhem3z6gwatqr2a3ah03pyqgamq4lsdkrsh4`
+- `echo $address2`
+  `tb1qqapg4e009c4leghl0fzuxr22g7kueea36v333s`
+  
+- `bitcoin-cli -testnet -named getaddressinfo address=$address2` 找到 pubkey的值就是公钥并复制，每个机器上的地址执行同样操作
+  ```json
+  {
+    "address": "tb1qqapg4e009c4leghl0fzuxr22g7kueea36v333s",
+    "scriptPubKey": "001407428ae5ef2e2bfca2ff7a45c30d4a47adcce7b1",
+    "ismine": true,
+    "solvable": true,
+    "desc": "wpkh([9881a23b/84h/1h/0h/0/1]0248d2d720f5d9c2aa0cb2246ac0eff59e9590a37e05e299ebad4230f40ca58ad1)#sxnz74w5",
+    "parent_desc": "wpkh([9881a23b/84h/1h/0h]tpubDDaLgHUhanxR7Roh9oDpXN44MwANGABFgjexEpWXmE5rUjrfSNL5h1rJXEBo3Yk23bC5xj7J5DMiQPooW4jSjMkQQ67enJg2mxKAzsSWyQA/0/*)#7t0k200x",
+    "iswatchonly": false,
+    "isscript": false,
+    "iswitness": true,
+    "witness_version": 0,
+    "witness_program": "07428ae5ef2e2bfca2ff7a45c30d4a47adcce7b1",
+    "pubkey": "0248d2d720f5d9c2aa0cb2246ac0eff59e9590a37e05e299ebad4230f40ca58ad1",
+    "ischange": false,
+    "timestamp": 1703084396,
+    "hdkeypath": "m/84h/1h/0h/0/1",
+    "hdseedid": "0000000000000000000000000000000000000000",
+    "hdmasterfingerprint": "9881a23b",
+    "labels": [
+      ""
+    ]
+  }
+  ```
+
+- `pubkey1=$(bitcoin-cli -testnet -named getaddressinfo address=$address1 | jq -r '.pubkey')` on machine1
+  `# 02c8e635189af1f051d8c49dae65395056344e87041e7680d85d0ecc78915dcd92`
+
+- `bitcoin-cli -testnet -named createmultisig nrequired=2 keys='''["'$pubkey1'", "0248d2d720f5d9c2aa0cb2246ac0eff59e9590a37e05e299ebad4230f40ca58ad1"]'''` on machine1, create multisig, and remember the address order
+  ```json
+  {
+    "address": "2NEzu2nkNTyXqnE5gKzCSDy1hyNyNyiX7rT",
+    "redeemScript": "522102c8e635189af1f051d8c49dae65395056344e87041e7680d85d0ecc78915dcd92210248d2d720f5d9c2aa0cb2246ac0eff59e9590a37e05e299ebad4230f40ca58ad152ae",
+    "descriptor": "sh(multi(2,02c8e635189af1f051d8c49dae65395056344e87041e7680d85d0ecc78915dcd92,0248d2d720f5d9c2aa0cb2246ac0eff59e9590a37e05e299ebad4230f40ca58ad1))#gld440s5"
+  }
+  ```
+
+- `recipient_multisig="2NEzu2nkNTyXqnE5gKzCSDy1hyNyNyiX7rT"` remember and send to the sender
+- `redeem_script="522102c8e635189af1f051d8c49dae65395056344e87041e7680d85d0ecc78915dcd92210248d2d720f5d9c2aa0cb2246ac0eff59e9590a37e05e299ebad4230f40ca58ad152ae"`
+- `multisig_descritor="sh(multi(2,02c8e635189af1f051d8c49dae65395056344e87041e7680d85d0ecc78915dcd92,0248d2d720f5d9c2aa0cb2246ac0eff59e9590a37e05e299ebad4230f40ca58ad1))#gld440s5"`
+  
+- `utxo_txid=$(bitcoin-cli -testnet listunspent | jq -r '.[0] | .txid')`
+- `utxo_vout=$(bitcoin-cli -testnet listunspent | jq -r '.[0] | .vout')`
+- `rawtxhex=$(bitcoin-cli -testnet -named createrawtransaction inputs='''[ { "txid": "'$utxo_txid'", "vout": '$utxo_vout' } ]''' outputs='''{ "'$recipient_multisig'": 0.000065}''')` 创建交易，和普通交易一样
+
+- `echo $rawtxhex`
+  `0200000001f66d4df26d059f9fe8db6479f01eee5371db259b5d7640ae95dba77f581584960000000000fdffffff01641900000000000017a914ee9d1e938724dcfaa09398415673889d5cc5cc258700000000`
+
+- `bitcoin-cli -testnet -named decoderawtransaction hexstring=$rawtxhex `
+  ```json
+  {
+    "txid": "ffa3c1b2dab8804983c00b9c5ae9310eb3eb375f384cd383750ad9059d5a2c7b",
+    "hash": "ffa3c1b2dab8804983c00b9c5ae9310eb3eb375f384cd383750ad9059d5a2c7b",
+    "version": 2,
+    "size": 83,
+    "vsize": 83,
+    "weight": 332,
+    "locktime": 0,
+    "vin": [
+      {
+        "txid": "968415587fa7db95ae40765d9b25db7153ee1ef07964dbe89f9f056df24d6df6",
+        "vout": 0,
+        "scriptSig": {
+          "asm": "",
+          "hex": ""
+        },
+        "sequence": 4294967293
+      }
+    ],
+    "vout": [
+      {
+        "value": 0.00006500,
+        "n": 0,
+        "scriptPubKey": {
+          "asm": "OP_HASH160 ee9d1e938724dcfaa09398415673889d5cc5cc25 OP_EQUAL",
+          "desc": "addr(2NEzu2nkNTyXqnE5gKzCSDy1hyNyNyiX7rT)#emjwvzpl",
+          "hex": "a914ee9d1e938724dcfaa09398415673889d5cc5cc2587",
+          "address": "2NEzu2nkNTyXqnE5gKzCSDy1hyNyNyiX7rT",
+          "type": "scripthash"
+        }
+      }
+    ]
+  }
+  ```
+
+- `signedtx=$(bitcoin-cli -testnet -named signrawtransactionwithwallet hexstring=$rawtxhex | jq -r '.hex')` 签名交易
+- `txid_multisig=$(bitcoin-cli -testnet -named sendrawtransaction hexstring=$signedtx)`
+- `echo $txid_mutisig`
+  `195b06fd3ee1e7c5ca9453af37cefc8dc3b40fb3ed34fb21a0c04f26eea03784`
+
+- `bitcoin-cli -testnet -named gettransaction txid=$txid_multisig`
+  ```json
+  {
+    "amount": -0.00006500,
+    "fee": -0.00093500,
+    "confirmations": 0,
+    "trusted": true,
+    "txid": "195b06fd3ee1e7c5ca9453af37cefc8dc3b40fb3ed34fb21a0c04f26eea03784",
+    "wtxid": "195b06fd3ee1e7c5ca9453af37cefc8dc3b40fb3ed34fb21a0c04f26eea03784",
+    "walletconflicts": [
+    ],
+    "time": 1703479090,
+    "timereceived": 1703479090,
+    "bip125-replaceable": "yes",
+    "details": [
+      {
+        "address": "2NEzu2nkNTyXqnE5gKzCSDy1hyNyNyiX7rT",
+        "category": "send",
+        "amount": -0.00006500,
+        "vout": 0,
+        "fee": -0.00093500,
+        "abandoned": false
+      }
+    ],
+    "hex": "0200000001f66d4df26d059f9fe8db6479f01eee5371db259b5d7640ae95dba77f58158496000000006a4730440220538bbf5e0c24c06dbaf0b11e25b1f7e829e55e322e2f20c5952f6dd8b1f87be3022028e6213af55e987ecd9f34ad0d58a65e88b40712444a7500b66b5e29f903578c012103f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3fdffffff01641900000000000017a914ee9d1e938724dcfaa09398415673889d5cc5cc258700000000",
+    "lastprocessedblock": {
+      "hash": "0000000000000006d083da505777eb48326fb47c08456463193f487b7609111f",
+      "height": 2544071
+    }
+  }
+  ```
+- `uxto_multisig_vout=0`
+  
+#### Spending a Transaction with a Multisig
+
+- `bitcoin-cli -testnet -named importaddress address=2NAGfA4nW6nrZkD5je8tSiAcYB9xL2xYMCz rescan="false"` 
+- `bitcoin-cli -testnet importmulti '[{"desc": "sh(multi(2,02c8e635189af1f051d8c49dae65395056344e87041e7680d85d0ecc78915dcd92,0248d2d720f5d9c2aa0cb2246ac0eff59e9590a37e05e299ebad4230f40ca58ad1))#gld440s5", "timestamp": "now", "watchonly": true}]'`
+
+- `uxto_multisig_spk=`
+- `recipient_multisig_new=$(bitcoin-cli -testnet getrawchangeaddress)`
+- `echo $recipient_multisig_new`
+  `tb1qlex8x3edh40wg2v086w864ujntkc2lh73etj72`
+
+- `rawtxhex_multisig=$(bitcoin-cli -testnet -named createrawtransaction inputs='''[ { "txid": "'$txid_multisig'", "vout": '$uxto_multisig_vout' } ]''' outputs='''{ "'$recipient_multisig_new'": 0.00005}''')` 创建交易
+  
+- `echo $rawtxhex_multisig`
+  `02000000018437a0ee264fc0a021fb34edb30fb4c38dfcce37af5394cac5e7e13efd065b190000000000fdffffff018813000000000000160014fe4c73472dbd5ee4298f3e9c7d57929aed857efe00000000`
