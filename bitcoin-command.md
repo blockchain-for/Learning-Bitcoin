@@ -605,3 +605,39 @@
   
 - `echo $rawtxhex_multisig`
   `02000000018437a0ee264fc0a021fb34edb30fb4c38dfcce37af5394cac5e7e13efd065b190000000000fdffffff018813000000000000160014fe4c73472dbd5ee4298f3e9c7d57929aed857efe00000000`
+
+#### Sending & Spending an Automated Multisig
+
+- `address3=$(bitcoin-cli -testnet getnewaddress)` on machine1
+- `echo address3`
+  `tb1q9f6h2qedshzm3asqnqa77yq2j7gn4wycpy0rrp`
+
+- `pubkey3=$(bitcoin-cli -testnet -named getaddressinfo address=$address3 | jq -r '.pubkey')`
+
+- `address4=$(bitcoin-cli -testnet getnewaddress)` on machine2
+- `echo address4`
+  `tb1qp7zlvst7mxepweam950dpajl9a206f0lnvy8ah`
+
+- `pubkey4=$(bitcoin-cli -testnet -named getaddressinfo address=$address4 | jq -r '.pubkey')`
+
+- `bitcoin-cli -testnet -named addmultisigaddress nrequired=2 keys='''["'$address3'","'$pubkey4'"]'''` on machine1
+  ```json
+  {
+    "address": "tb1q9as46kupwcxancdx82gw65365svlzdwmjal4uxs23t3zz3rgg3wqpqlhex",
+    "redeemScript": "52210297e681bff16cd4600138449e2527db4b2f83955c691a1b84254ecffddb9bfbfc2102a0d96e16458ff0c90db4826f86408f2cfa0e960514c0db547ff152d3e567738f52ae",
+    "descriptor": "wsh(multi(2,[d6043800/0'/0'/15']0297e681bff16cd4600138449e2527db4b2f83955c691a1b84254ecffddb9bfbfc,[e9594be8]02a0d96e16458ff0c90db4826f86408f2cfa0e960514c0db547ff152d3e567738f))#wxn4tdju"
+  }
+  ```
+- `bitcoin-cli -testnet -named addmultisigaddress nrequired=2 keys='''["'$pubkey3'","'$address4'"]'''` on machine2
+  ```json
+  {
+    "address": "tb1q9as46kupwcxancdx82gw65365svlzdwmjal4uxs23t3zz3rgg3wqpqlhex",
+    "redeemScript": "52210297e681bff16cd4600138449e2527db4b2f83955c691a1b84254ecffddb9bfbfc2102a0d96e16458ff0c90db4826f86408f2cfa0e960514c0db547ff152d3e567738f52ae",
+    "descriptor": "wsh(multi(2,[ae42a66f]0297e681bff16cd4600138449e2527db4b2f83955c691a1b84254ecffddb9bfbfc,[fe6f2292/0'/0'/2']02a0d96e16458ff0c90db4826f86408f2cfa0e960514c0db547ff152d3e567738f))#cc96c5n6"
+  }
+  ```
+
+- `bitcoin-cli -testnet -named importaddress address=tb1q9as46kupwcxancdx82gw65365svlzdwmjal4uxs23t3zz3rgg3wqpqlhex rescan="false"` on machine1
+- `bitcoin-cli -testnet -named importaddress address=tb1q9as46kupwcxancdx82gw65365svlzdwmjal4uxs23t3zz3rgg3wqpqlhex rescan="false"` on machine2
+
+
