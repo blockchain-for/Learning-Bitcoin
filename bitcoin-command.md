@@ -100,7 +100,41 @@
 - `bitcoin-cli -testnet listtransactions` 列出本地钱包经手的交易
 - `bitcoin-cli -testnet listunspent` 列出没花费的交易
 - `bitcoin-cli -testnet gettransaction 'b00de623fefd5a7ae90a6926912f35aef658f0c49dfd0ef80f5eed8b0c75b01f'` 查看指定交易id的交易明细
-  
+  ```json
+  {
+    "amount": 0.00100000,
+    "confirmations": 605,
+    "blockhash": "000000000000000169c33a1c96ddf635957be69313c5de8d5789a57a62d4e76b",
+    "blockheight": 2543574,
+    "blockindex": 83,
+    "blocktime": 1703129493,
+    "txid": "b00de623fefd5a7ae90a6926912f35aef658f0c49dfd0ef80f5eed8b0c75b01f",
+    "wtxid": "56ee7754a54a1b4c8eb6a35b248e17dcf16e0e92ea21006930d1810bc38c6af2",
+    "walletconflicts": [
+    ],
+    "time": 1703129493,
+    "timereceived": 1703129195,
+    "bip125-replaceable": "no",
+    "details": [
+      {
+        "address": "tb1qxeqhem3z6gwatqr2a3ah03pyqgamq4lsdkrsh4",
+        "parent_descs": [
+          "wpkh(tpubD6NzVbkrYhZ4WdbQsDoaZZSvE18CuK3QoUCafEWZ8jFjdCgYyYK6dqQq3d7ygdcFQHgkgubbmVtcvUC5mPwpAGsfN2emgE8uwLDrXSNxk4G/84h/1h/0h/0/*)#csns54qh"
+        ],
+        "category": "receive",
+        "amount": 0.00100000,
+        "label": "",
+        "vout": 0,
+        "abandoned": false
+      }
+    ],
+    "hex": "020000000001014147cdbea0d2a1b946acad78c8a739077b0e4629a44865deefe4c67577f0a6790000000000fdffffff02a08601000000000016001436417cee22d21dd5806aec7b77c424023bb057f09f0f3e9108000000160014da68cc34477b119caa6921c633fe93003292fc040247304402206bec056c4cd8e9ce0c11c350e5f3ffc597ee52b922f9eb2f5e18e88222d0acb7022060477e73c49d03f60c4b75a755804b3b114fef9b9005b406d4bf2d468e571e7d01210213f24a5d07bababc02eafc723dcf0b4fd0158604627b3e7a7117bcc220c4e4d2d5cf2600",
+    "lastprocessedblock": {
+      "hash": "00000000000079bbc48f039cd09b8beaaa2755f5c752bd44d49f0c14e75427ed",
+      "height": 2544178
+    }
+  }
+  ```
 #### Descriptor
 - `bitcoin-cli -testnet getaddressinfo mvdZMfdZVLPogTfM35pDZNapx52TGwJ7Eu` 查看指定地址的信息
     ```json
@@ -589,19 +623,19 @@
     }
   }
   ```
-- `uxto_multisig_vout=0`
+- `utxo_multisig_vout=0`
   
 #### Spending a Transaction with a Multisig
 
 - `bitcoin-cli -testnet -named importaddress address=2NAGfA4nW6nrZkD5je8tSiAcYB9xL2xYMCz rescan="false"` 
 - `bitcoin-cli -testnet importmulti '[{"desc": "sh(multi(2,02c8e635189af1f051d8c49dae65395056344e87041e7680d85d0ecc78915dcd92,0248d2d720f5d9c2aa0cb2246ac0eff59e9590a37e05e299ebad4230f40ca58ad1))#gld440s5", "timestamp": "now", "watchonly": true}]'`
 
-- `uxto_multisig_spk=`
+- `utxo_multisig_spk=`
 - `recipient_multisig_new=$(bitcoin-cli -testnet getrawchangeaddress)`
 - `echo $recipient_multisig_new`
   `tb1qlex8x3edh40wg2v086w864ujntkc2lh73etj72`
 
-- `rawtxhex_multisig=$(bitcoin-cli -testnet -named createrawtransaction inputs='''[ { "txid": "'$txid_multisig'", "vout": '$uxto_multisig_vout' } ]''' outputs='''{ "'$recipient_multisig_new'": 0.00005}''')` 创建交易
+- `rawtxhex_multisig=$(bitcoin-cli -testnet -named createrawtransaction inputs='''[ { "txid": "'$txid_multisig'", "vout": '$utxo_multisig_vout' } ]''' outputs='''{ "'$recipient_multisig_new'": 0.00005}''')` 创建交易
   
 - `echo $rawtxhex_multisig`
   `02000000018437a0ee264fc0a021fb34edb30fb4c38dfcce37af5394cac5e7e13efd065b190000000000fdffffff018813000000000000160014fe4c73472dbd5ee4298f3e9c7d57929aed857efe00000000`
@@ -640,4 +674,345 @@
 - `bitcoin-cli -testnet -named importaddress address=tb1q9as46kupwcxancdx82gw65365svlzdwmjal4uxs23t3zz3rgg3wqpqlhex rescan="false"` on machine1
 - `bitcoin-cli -testnet -named importaddress address=tb1q9as46kupwcxancdx82gw65365svlzdwmjal4uxs23t3zz3rgg3wqpqlhex rescan="false"` on machine2
 
+#### Creating a Partially Signed Bitcoin Transaction
 
+- `utxo_txid_1=$(bitcoin-cli -testnet listunspent | jq -r '.[0] .txid')`
+- `echo $utxo_txid_1`
+  `74faae74913f109b8e00a3f206c012282121ad198c5c6fe7eeed09e8b1ff43c6`
+- `utxo_vout_1=$(bitcoin-cli -testnet listunspent | jq -r '.[0] .vout')`
+- `echo $utxo_vout_1`
+  `0`
+- `utxo_txid_2=$(bitcoin-cli -testnet listunspent | jq -r '.[1] .txid')`
+- `echo $utxo_txid_2`
+  `2dccce25cdbbd62427a4f1df77c72dd4ba0c0a1c1ccc778d044c12bd389536b6`
+- `utxo_vout_2=$(bitcoin-cli -testnet listunspent | jq -r '.[1] .vout')`
+- `echo $utxo_vout_2`
+  `0`
+
+- `recipient="tb1qxeqhem3z6gwatqr2a3ah03pyqgamq4lsdkrsh4"`
+
+##### Create a PSBT the Old-Fashioned Way
+
+- `rawtxhex=$(bitcoin-cli -testnet -named createrawtransaction inputs='''[ { "txid": "'$utxo_txid_1'", "vout": '$utxo_vout_1' }, { "txid": "'$utxo_txid_2'", "vout": '$utxo_vout_2' }]''' outputs='''{ "'$recipient'": 0.0000065 }''')`
+- `echo rawtxhex`
+  `0200000002c643ffb1e809edeee76f5c8c19ad21212812c006f2a3008e9b103f9174aefa740000000000fdffffffb6369538bd124c048d77cc1c1c0a0cbad42dc777dff1a42724d6bbcd25cecc2d0000000000fdffffff018a0200000000000016001436417cee22d21dd5806aec7b77c424023bb057f000000000`
+
+- `psbt=$(bitcoin-cli -testnet -named converttopsbt hexstring=$rawtxhex)`
+- `echo $psbt`
+  `cHNidP8BAHsCAAAAAsZD/7HoCe3u529cjBmtISEoEsAG8qMAjpsQP5F0rvp0AAAAAAD9////tjaVOL0STASNd8wcHAoMutQtx3ff8aQnJNa7zSXOzC0AAAAAAP3///8BigIAAAAAAAAWABQ2QXzuItId1YBq7Ht3xCQCO7BX8AAAAAAAAAAA`
+
+##### Create a PSBT the Hard Way
+
+- `psbt_1=$(bitcoin-cli -testnet -named createpsbt inputs='''[ { "txid": "'$utxo_txid_1'", "vout": '$utxo_vout_1' }, { "txid": "'$utxo_txid_2'", "vout": '$utxo_vout_2' } ]''' outputs='''{ "'$recipient'": 0.0000065 }''')`
+- `echo $psbt_1`
+  `cHNidP8BAHsCAAAAAsZD/7HoCe3u529cjBmtISEoEsAG8qMAjpsQP5F0rvp0AAAAAAD9////tjaVOL0STASNd8wcHAoMutQtx3ff8aQnJNa7zSXOzC0AAAAAAP3///8BigIAAAAAAAAWABQ2QXzuItId1YBq7Ht3xCQCO7BX8AAAAAAAAAAA`
+
+- `if [ "$psbt" == "$psbt_1" ]; then     echo "PSBTs are equal"; else     echo "PSBTs are not equal"; fi` compare the tow psbts are same or not
+  `PSBTs are equal` the two methods are same
+
+- `bitcoin-cli -testnet -named decodepsbt psbt=$psbt` decode the psbt tx
+  ```json
+  {
+    "tx": {
+      "txid": "5289ba065e1f593b2b3fc2b08a2173ce3ab32c7fbd469d02348f29b2dad31868",
+      "hash": "5289ba065e1f593b2b3fc2b08a2173ce3ab32c7fbd469d02348f29b2dad31868",
+      "version": 2,
+      "size": 123,
+      "vsize": 123,
+      "weight": 492,
+      "locktime": 0,
+      "vin": [
+        {
+          "txid": "74faae74913f109b8e00a3f206c012282121ad198c5c6fe7eeed09e8b1ff43c6",
+          "vout": 0,
+          "scriptSig": {
+            "asm": "",
+            "hex": ""
+          },
+          "sequence": 4294967293
+        },
+        {
+          "txid": "2dccce25cdbbd62427a4f1df77c72dd4ba0c0a1c1ccc778d044c12bd389536b6",
+          "vout": 0,
+          "scriptSig": {
+            "asm": "",
+            "hex": ""
+          },
+          "sequence": 4294967293
+        }
+      ],
+      "vout": [
+        {
+          "value": 0.00000650,
+          "n": 0,
+          "scriptPubKey": {
+            "asm": "0 36417cee22d21dd5806aec7b77c424023bb057f0",
+            "desc": "addr(tb1qxeqhem3z6gwatqr2a3ah03pyqgamq4lsdkrsh4)#q2acrcrq",
+            "hex": "001436417cee22d21dd5806aec7b77c424023bb057f0",
+            "address": "tb1qxeqhem3z6gwatqr2a3ah03pyqgamq4lsdkrsh4",
+            "type": "witness_v0_keyhash"
+          }
+        }
+      ]
+    },
+    "global_xpubs": [
+    ],
+    "psbt_version": 0,
+    "proprietary": [
+    ],
+    "unknown": {
+    },
+    "inputs": [
+      {
+      },
+      {
+      }
+    ],
+    "outputs": [
+      {
+      }
+    ]
+  }
+  ```
+
+- `bitcoin-cli -testnet -named analyzepsbt psbt=$psbt` 分析 psbt
+  ```json
+  {
+    "inputs": [
+      {
+        "has_utxo": false,
+        "is_final": false,
+        "next": "updater"
+      },
+      {
+        "has_utxo": false,
+        "is_final": false,
+        "next": "updater"
+      }
+    ],
+    "next": "updater"
+  }
+  ```
+
+- `bitcoin-cli -testnet walletprocesspsbt $psbt` 用钱包 Update，Sign and Finalize PSBT
+  ```json
+  {
+    "psbt": "cHNidP8BAHsCAAAAAsZD/7HoCe3u529cjBmtISEoEsAG8qMAjpsQP5F0rvp0AAAAAAD9////tjaVOL0STASNd8wcHAoMutQtx3ff8aQnJNa7zSXOzC0AAAAAAP3///8BigIAAAAAAAAWABQ2QXzuItId1YBq7Ht3xCQCO7BX8AAAAAAAAQB3AgAAAAFtbA77vmUbqc8Q14c3J6WKIyJ/c9sC/vhZIxgTY/IQNQEAAAAA/f///wKghgEAAAAAABl2qRSlyaarbwiYAGPznnuuHoONUN3dRIis3ObxSgIAAAAZdqkUP03o9G3DzqDDnavvKfVBSh2/We+IrNbQJgABB2pHMEQCICU8UPVv/nrVH4/SILJhcA/c1aiThl2BanAgUBCvRaKyAiAzdlg9ldvumFpao0OeOiuyj0SrGZvAcpwGHE7Q/MLYzgEhA/jR5KLFiZGtelWgfR8VteWYSPBViKZaV9JmBku6hhHjAAEAdwIAAAABZ8MlD9ZoLLbjbcbQ1op40Cd9iNigrpCWKO7Wmb/rzLEBAAAAAP3///8CoIYBAAAAAAAZdqkUpcmmq28ImABj8557rh6DjVDd3USIrCm9OJAIAAAAGXapFEIMLWyggN+yqGHBmF7oAXIH0T9CiKxv0SYAAQdqRzBEAiBP0vuKDFA7tO7I1CgQNScKsqiMwSa2fcTtP8hatpfSdwIgGs7fBeqCzLMubfR03+38NMqtx0OKUAynY2oLTDarE0ABIQP40eSixYmRrXpVoH0fFbXlmEjwVYimWlfSZgZLuoYR4wAiAgLI5jUYmvHwUdjEna5lOVBWNE6HBB52gNhdDsx4kV3NkhiYgaI7VAAAgAEAAIAAAACAAAAAAAAAAAAA",
+    "complete": true,
+    "hex": "0200000002c643ffb1e809edeee76f5c8c19ad21212812c006f2a3008e9b103f9174aefa74000000006a4730440220253c50f56ffe7ad51f8fd220b261700fdcd5a893865d816a70205010af45a2b202203376583d95dbee985a5aa3439e3a2bb28f44ab199bc0729c061c4ed0fcc2d8ce012103f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3fdffffffb6369538bd124c048d77cc1c1c0a0cbad42dc777dff1a42724d6bbcd25cecc2d000000006a47304402204fd2fb8a0c503bb4eec8d4281035270ab2a88cc126b67dc4ed3fc85ab697d27702201acedf05ea82ccb32e6df474dfedfc34caadc7438a500ca7636a0b4c36ab1340012103f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3fdffffff018a0200000000000016001436417cee22d21dd5806aec7b77c424023bb057f000000000"
+  }
+  ```
+- `psbt_f="cHNidP8BAHsCAAAAAsZD/7HoCe3u529cjBmtISEoEsAG8qMAjpsQP5F0rvp0AAAAAAD9////tjaVOL0STASNd8wcHAoMutQtx3ff8aQnJNa7zSXOzC0AAAAAAP3///8BigIAAAAAAAAWABQ2QXzuItId1YBq7Ht3xCQCO7BX8AAAAAAAAQB3AgAAAAFtbA77vmUbqc8Q14c3J6WKIyJ/c9sC/vhZIxgTY/IQNQEAAAAA/f///wKghgEAAAAAABl2qRSlyaarbwiYAGPznnuuHoONUN3dRIis3ObxSgIAAAAZdqkUP03o9G3DzqDDnavvKfVBSh2/We+IrNbQJgABB2pHMEQCICU8UPVv/nrVH4/SILJhcA/c1aiThl2BanAgUBCvRaKyAiAzdlg9ldvumFpao0OeOiuyj0SrGZvAcpwGHE7Q/MLYzgEhA/jR5KLFiZGtelWgfR8VteWYSPBViKZaV9JmBku6hhHjAAEAdwIAAAABZ8MlD9ZoLLbjbcbQ1op40Cd9iNigrpCWKO7Wmb/rzLEBAAAAAP3///8CoIYBAAAAAAAZdqkUpcmmq28ImABj8557rh6DjVDd3USIrCm9OJAIAAAAGXapFEIMLWyggN+yqGHBmF7oAXIH0T9CiKxv0SYAAQdqRzBEAiBP0vuKDFA7tO7I1CgQNScKsqiMwSa2fcTtP8hatpfSdwIgGs7fBeqCzLMubfR03+38NMqtx0OKUAynY2oLTDarE0ABIQP40eSixYmRrXpVoH0fFbXlmEjwVYimWlfSZgZLuoYR4wAiAgLI5jUYmvHwUdjEna5lOVBWNE6HBB52gNhdDsx4kV3NkhiYgaI7VAAAgAEAAIAAAACAAAAAAAAAAAAA"`
+- `psbt_f=$(bitcoin-cli -testnet walletprocesspsbt $psbt | jq -r '.psbt')` or 
+- `bitcoin-cli -testnet -named decodepsbt psbt=$psbt_f`
+  ```json
+  {
+    "tx": {
+      "txid": "5289ba065e1f593b2b3fc2b08a2173ce3ab32c7fbd469d02348f29b2dad31868",
+      "hash": "5289ba065e1f593b2b3fc2b08a2173ce3ab32c7fbd469d02348f29b2dad31868",
+      "version": 2,
+      "size": 123,
+      "vsize": 123,
+      "weight": 492,
+      "locktime": 0,
+      "vin": [
+        {
+          "txid": "74faae74913f109b8e00a3f206c012282121ad198c5c6fe7eeed09e8b1ff43c6",
+          "vout": 0,
+          "scriptSig": {
+            "asm": "",
+            "hex": ""
+          },
+          "sequence": 4294967293
+        },
+        {
+          "txid": "2dccce25cdbbd62427a4f1df77c72dd4ba0c0a1c1ccc778d044c12bd389536b6",
+          "vout": 0,
+          "scriptSig": {
+            "asm": "",
+            "hex": ""
+          },
+          "sequence": 4294967293
+        }
+      ],
+      "vout": [
+        {
+          "value": 0.00000650,
+          "n": 0,
+          "scriptPubKey": {
+            "asm": "0 36417cee22d21dd5806aec7b77c424023bb057f0",
+            "desc": "addr(tb1qxeqhem3z6gwatqr2a3ah03pyqgamq4lsdkrsh4)#q2acrcrq",
+            "hex": "001436417cee22d21dd5806aec7b77c424023bb057f0",
+            "address": "tb1qxeqhem3z6gwatqr2a3ah03pyqgamq4lsdkrsh4",
+            "type": "witness_v0_keyhash"
+          }
+        }
+      ]
+    },
+    "global_xpubs": [
+    ],
+    "psbt_version": 0,
+    "proprietary": [
+    ],
+    "unknown": {
+    },
+    "inputs": [
+      {
+        "non_witness_utxo": {
+          "txid": "74faae74913f109b8e00a3f206c012282121ad198c5c6fe7eeed09e8b1ff43c6",
+          "hash": "74faae74913f109b8e00a3f206c012282121ad198c5c6fe7eeed09e8b1ff43c6",
+          "version": 2,
+          "size": 119,
+          "vsize": 119,
+          "weight": 476,
+          "locktime": 2543830,
+          "vin": [
+            {
+              "txid": "3510f26313182359f8fe02db737f22238aa5273787d710cfa91b65befb0e6c6d",
+              "vout": 1,
+              "scriptSig": {
+                "asm": "",
+                "hex": ""
+              },
+              "sequence": 4294967293
+            }
+          ],
+          "vout": [
+            {
+              "value": 0.00100000,
+              "n": 0,
+              "scriptPubKey": {
+                "asm": "OP_DUP OP_HASH160 a5c9a6ab6f08980063f39e7bae1e838d50dddd44 OP_EQUALVERIFY OP_CHECKSIG",
+                "desc": "addr(mvdZMfdZVLPogTfM35pDZNapx52TGwJ7Eu)#s5ce2mu3",
+                "hex": "76a914a5c9a6ab6f08980063f39e7bae1e838d50dddd4488ac",
+                "address": "mvdZMfdZVLPogTfM35pDZNapx52TGwJ7Eu",
+                "type": "pubkeyhash"
+              }
+            },
+            {
+              "value": 98.47301852,
+              "n": 1,
+              "scriptPubKey": {
+                "asm": "OP_DUP OP_HASH160 3f4de8f46dc3cea0c39dabef29f5414a1dbf59ef OP_EQUALVERIFY OP_CHECKSIG",
+                "desc": "addr(mmHgCRHsyvDsacapJY9SWvENywAKKeV9qy)#fzrq8nn6",
+                "hex": "76a9143f4de8f46dc3cea0c39dabef29f5414a1dbf59ef88ac",
+                "address": "mmHgCRHsyvDsacapJY9SWvENywAKKeV9qy",
+                "type": "pubkeyhash"
+              }
+            }
+          ]
+        },
+        "final_scriptSig": {
+          "asm": "30440220253c50f56ffe7ad51f8fd220b261700fdcd5a893865d816a70205010af45a2b202203376583d95dbee985a5aa3439e3a2bb28f44ab199bc0729c061c4ed0fcc2d8ce[ALL] 03f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3",
+          "hex": "4730440220253c50f56ffe7ad51f8fd220b261700fdcd5a893865d816a70205010af45a2b202203376583d95dbee985a5aa3439e3a2bb28f44ab199bc0729c061c4ed0fcc2d8ce012103f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3"
+        }
+      },
+      {
+        "non_witness_utxo": {
+          "txid": "2dccce25cdbbd62427a4f1df77c72dd4ba0c0a1c1ccc778d044c12bd389536b6",
+          "hash": "2dccce25cdbbd62427a4f1df77c72dd4ba0c0a1c1ccc778d044c12bd389536b6",
+          "version": 2,
+          "size": 119,
+          "vsize": 119,
+          "weight": 476,
+          "locktime": 2543983,
+          "vin": [
+            {
+              "txid": "b1ccebbf99d6ee289690aea0d8887d27d0788ad6d0c66de3b62c68d60f25c367",
+              "vout": 1,
+              "scriptSig": {
+                "asm": "",
+                "hex": ""
+              },
+              "sequence": 4294967293
+            }
+          ],
+          "vout": [
+            {
+              "value": 0.00100000,
+              "n": 0,
+              "scriptPubKey": {
+                "asm": "OP_DUP OP_HASH160 a5c9a6ab6f08980063f39e7bae1e838d50dddd44 OP_EQUALVERIFY OP_CHECKSIG",
+                "desc": "addr(mvdZMfdZVLPogTfM35pDZNapx52TGwJ7Eu)#s5ce2mu3",
+                "hex": "76a914a5c9a6ab6f08980063f39e7bae1e838d50dddd4488ac",
+                "address": "mvdZMfdZVLPogTfM35pDZNapx52TGwJ7Eu",
+                "type": "pubkeyhash"
+              }
+            },
+            {
+              "value": 367.79375913,
+              "n": 1,
+              "scriptPubKey": {
+                "asm": "OP_DUP OP_HASH160 420c2d6ca080dfb2a861c1985ee8017207d13f42 OP_EQUALVERIFY OP_CHECKSIG",
+                "desc": "addr(mmYBUpQNE4XBMHb4UQaAETTVn8iee57Z6d)#3r9pj8gg",
+                "hex": "76a914420c2d6ca080dfb2a861c1985ee8017207d13f4288ac",
+                "address": "mmYBUpQNE4XBMHb4UQaAETTVn8iee57Z6d",
+                "type": "pubkeyhash"
+              }
+            }
+          ]
+        },
+        "final_scriptSig": {
+          "asm": "304402204fd2fb8a0c503bb4eec8d4281035270ab2a88cc126b67dc4ed3fc85ab697d27702201acedf05ea82ccb32e6df474dfedfc34caadc7438a500ca7636a0b4c36ab1340[ALL] 03f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3",
+          "hex": "47304402204fd2fb8a0c503bb4eec8d4281035270ab2a88cc126b67dc4ed3fc85ab697d27702201acedf05ea82ccb32e6df474dfedfc34caadc7438a500ca7636a0b4c36ab1340012103f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3"
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "bip32_derivs": [
+          {
+            "pubkey": "02c8e635189af1f051d8c49dae65395056344e87041e7680d85d0ecc78915dcd92",
+            "master_fingerprint": "9881a23b",
+            "path": "m/84h/1h/0h/0/0"
+          }
+        ]
+      }
+    ],
+    "fee": 0.00199350
+  }
+  ```
+
+ ##### Create a PSBT the Easy Way
+
+- `bitcoin-cli -testnet -named walletcreatefundedpsbt inputs='''[ { "txid": "'$utxo_txid_1'", "vout": '$utxo_vout_1' }, { "txid": "'$utxo_txid_2'", "vout": '$utxo_vout_2' }]''' outputs='''{ "'$recipient'": 0.0000065 }'''` 
+  ```json
+  {
+    "psbt": "cHNidP8BAJoCAAAAAsZD/7HoCe3u529cjBmtISEoEsAG8qMAjpsQP5F0rvp0AAAAAAD9////tjaVOL0STASNd8wcHAoMutQtx3ff8aQnJNa7zSXOzC0AAAAAAP3///8CvnsCAAAAAAAWABSWrKv4RT3SAOnB29odoHVgp3p5JYoCAAAAAAAAFgAUNkF87iLSHdWAaux7d8QkAjuwV/AAAAAAAAEAdwIAAAABbWwO+75lG6nPENeHNyeliiMif3PbAv74WSMYE2PyEDUBAAAAAP3///8CoIYBAAAAAAAZdqkUpcmmq28ImABj8557rh6DjVDd3USIrNzm8UoCAAAAGXapFD9N6PRtw86gw52r7yn1QUodv1nviKzW0CYAIgYD+NHkosWJka16VaB9HxW15ZhI8FWIplpX0mYGS7qGEeMYmIGiOywAAIABAACAAAAAgAAAAAAAAAAAAAEAdwIAAAABZ8MlD9ZoLLbjbcbQ1op40Cd9iNigrpCWKO7Wmb/rzLEBAAAAAP3///8CoIYBAAAAAAAZdqkUpcmmq28ImABj8557rh6DjVDd3USIrCm9OJAIAAAAGXapFEIMLWyggN+yqGHBmF7oAXIH0T9CiKxv0SYAIgYD+NHkosWJka16VaB9HxW15ZhI8FWIplpX0mYGS7qGEeMYmIGiOywAAIABAACAAAAAgAAAAAAAAAAAACICAghqRvs3MBppTy7S6s2+wrocfte4YdxZjGIXQviL30vZGJiBojtUAACAAQAAgAAAAIABAAAAAwAAAAAiAgLI5jUYmvHwUdjEna5lOVBWNE6HBB52gNhdDsx4kV3NkhiYgaI7VAAAgAEAAIAAAACAAAAAAAAAAAAA",
+    "fee": 0.00036600,
+    "changepos": 0
+  }
+  ```
+
+- `psbt_new=$(bitcoin-cli -testnet -named walletcreatefundedpsbt inputs='''[]''' outputs='''{ "'$recipient'": 0.0000065 }''' | jq -r '.psbt')`
+- `bitcoin-cli -testnet decodepsbt $psbt_new`
+
+- `psbt_new_f=$(bitcoin-cli walletprocesspsbt $psbt_new | jq -r '.psbt')`
+- `bitcoin-cli -testnet analyzepsbt $psbt_new_f`
+  ```json
+  {
+    "inputs": [
+      {
+        "has_utxo": true,
+        "is_final": true,
+        "next": "extractor"
+      }
+    ],
+    "estimated_vsize": 188,
+    "estimated_feerate": 0.00102925,
+    "fee": 0.00019350,
+    "next": "extractor"
+  }
+  ```
+
+- `bitcoin-cli -testnet finalizepsbt $psbt_f`
+  ```json
+  {
+    "hex": "0200000002c643ffb1e809edeee76f5c8c19ad21212812c006f2a3008e9b103f9174aefa74000000006a4730440220253c50f56ffe7ad51f8fd220b261700fdcd5a893865d816a70205010af45a2b202203376583d95dbee985a5aa3439e3a2bb28f44ab199bc0729c061c4ed0fcc2d8ce012103f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3fdffffffb6369538bd124c048d77cc1c1c0a0cbad42dc777dff1a42724d6bbcd25cecc2d000000006a47304402204fd2fb8a0c503bb4eec8d4281035270ab2a88cc126b67dc4ed3fc85ab697d27702201acedf05ea82ccb32e6df474dfedfc34caadc7438a500ca7636a0b4c36ab1340012103f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3fdffffff018a0200000000000016001436417cee22d21dd5806aec7b77c424023bb057f000000000",
+    "complete": true
+  }
+  ```
+- `psbt_hex=$(bitcoin-cli -testnet finalizepsbt $psbt_f | jq -r '.hex')`
+- `psbt_txid=$(bitcoin-cli -testnet -named sendrawtransaction hexstring=$psbt_hex)`
+- `echo $psbt_txid`
+  `17bcef84b95467dc2de2dea66f007b1ce793d691f58fc2172d35f2031e28b43c`
