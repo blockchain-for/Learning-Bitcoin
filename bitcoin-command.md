@@ -1089,3 +1089,23 @@
 - `psbt_f=$(bitcoin-cli -testnet walletprocesspsbt $psbt_p | jq -r '.psbt')`
 - `psbt_hex=$(bitcoin-cli -testnet finalizepsbt $psbt_f | jq -r '.hex')`
 - `multisig_txid=$(bitcoin-cli -testnet -named sendrawtransaction hexstring=$psbt_hex)`
+
+#### Sending a Transaction with a Locktime
+- `rawtxhex=$(bitcoin-cli =estnet -named createrawtransaction inputs='''[ { "txid": "'$utxo_txid'", "vout": '$utxo_vout' } ]''' outputs='''{ "'$recipient'": 0.001, "'$changeaddress'": 0.00095 }''' locktime=1774650)`
+
+- `signedtx=$(bitcoin-cli testnet -named signrawtransactionwithwallet hexstring=$rawtxhex | jq -r '.hex')`
+- `bitcoin-cli -testnet -named sendrawtransaction hexstring=$signedtx` Since 2013, you generally can't place the timelocked transaction into the mempool until its lock has expired, otherwise will got an error
+  
+#### Sending a Transaction with Data
+- `sha256sum contract.jpg`
+  `efb335158c77dbc659c6115769de0d1c3f0dc6dc92a7e864fcf83ff098460233`
+- `op_return_data="efb335158c77dbc659c6115769de0d1c3f0dc6dc92a7e864fcf83ff098460233"`
+- `utxo_txid=$(bitcoin-cli -testnet listunspent | jq -r '.[0] | .txid')`
+- `utxo_vout=$(bitcoin-cli -testnet listunspent | jq -r '.[0] | .vout')`
+- `changeaddress=$(bitcoin-cli -testnet getrawchangeaddress)`
+  
+- `rawtxhex=$(bitcoin-cli -testnet -named createrawtransaction inputs='''[ { "txid": "'$utxo_txid'", "vout": '$utxo_vout' } ]''' outputs='''{ "data": "'$op_return_data'", "'$changeaddress'": 0.0000146 }''')`
+
+- `signedtx=$(bitcoin-cli -testnet -named signrawtransactionwithwallet hexstring=$rawtxhex | jq -r '.hex')`
+- `bitcoin-cli -testnet -named sendrawtransaction hexstring=$signedtx`
+
