@@ -1016,3 +1016,76 @@
 - `psbt_txid=$(bitcoin-cli -testnet -named sendrawtransaction hexstring=$psbt_hex)`
 - `echo $psbt_txid`
   `17bcef84b95467dc2de2dea66f007b1ce793d691f58fc2172d35f2031e28b43c`
+
+#### Use a PSBT to Spend MultiSig Funds
+- `split1=$(bitcoin-cli -testnet getnewaddress)`
+- `split2=$(bitcoin-cli -testnet getnewaddress)`
+- `utxo_txid=$(bitcoin-cli -testnet listunspent | jq -r '.[1] .txid')`
+- `utxo_vout=$(bitcoin-cli -testnet listunspent | jq -r '.[1] .vout')`
+- `psbt=$(bitcoin-cli -testnet -named createpsbt inputs='''[ { "txid": "'$utxo_txid'", "vout": '$utxo_vout' }]''' outputs='''{"'$split1'": 0.0004, "'$split2'": 0.0004 }''')`
+- `echo $psbt`
+  `cHNidP8BAHECAAAAAVw1Rdw+SQTbwRqE6ckrt4OTu4uGhgoGPc8/5EszFIjvAQAAAAD9////AkCcAAAAAAAAFgAUnRjg25nuZMldEuLUmvjmYpVWEbJAnAAAAAAAABYAFMt4p7vLkwkrPW8rapx9zXczfX6IAAAAAAAAAAA=`
+
+- `psbt_p1=$(bitcoin-cli -testnet walletprocesspsbt $psbt | jq -r '.psbt')` on machine1
+- `bitcoin-cli -testnet decodepsbt $psbt_p1`
+- `bitcoin-cli -testnet analyzepsbt $psbt_p1`
+  
+- `psbt="cHNidP8BAHECAAAAAVw1Rdw+SQTbwRqE6ckrt4OTu4uGhgoGPc8/5EszFIjvAQAAAAD9////AkCcAAAAAAAAFgAUnRjg25nuZMldEuLUmvjmYpVWEbJAnAAAAAAAABYAFMt4p7vLkwkrPW8rapx9zXczfX6IAAAAAAAAAAA="` on machine2
+- `psbt_p2=$(bitcoin-cli -testnet walletprocesspsbt $psbt | jq -r '.psbt')` on machine2
+- `psbt_c=$(bitcoin-cli -testnet combinepsbt '''["'$psbt_p1'", "'$psbt_p2'"]''')` on machine2
+- `bitcoin-cli -testnet decodepsbt $psbt_c`
+- `bitcoin-cli -testnet analyzepsbt $psbt_c`
+- `psbt_c_hex=$(bitcoin-cli -testnet finalizepsbt $psbt_c | jq -r '.hex')` on machine2
+- `bitcoin-cli -testnet -named sendrawtransaction hexstring=$psbt_c_hex`
+  
+#### Use a PSBT to Pool Money
+
+- `utxo_txid_1=$(bitcoin-cli -testnet listunspent | jq -r '.[2] .txid')` on machine1
+- `utxo_vout_1=$(bitcoin-cli -testnet listunspent | jq -r '.[2] .vout')`
+- `utxo_txid_2=$(bitcoin-cli -testnet listunspent | jq -r '.[4] .txid')` on machine2
+- `utxo_vout_2=$(bitcoin-cli -testnet listunspent | jq -r '.[4] .vout')`
+- `echo $utxo_txid_2`
+  `e2ce7e21638e39adf17f8bef482f4ba4cbc4d1cfd6635ae39177c7345d5f9309`
+- `echo $utxo_vout_2`
+  `0`
+
+- `utxo_txid_2="e2ce7e21638e39adf17f8bef482f4ba4cbc4d1cfd6635ae39177c7345d5f9309"` on machine1
+- `utxo_vout_2=0`
+- `multisig=$(bitcoin-cli -testnet getnewaddress)`
+- `echo $multisig`
+  `tb1qltvpduwfgp6ulune3sl56pamq7zw0uk6cmsfwq`
+
+- `psbt=$(bitcoin-cli -testnet -named createpsbt inputs='''[ { "txid": "'$utxo_txid_1'", "vout": '$utxo_vout_1' }, { "txid": "'$utxo_txid_2'", "vout": '$utxo_vout_2' } ]''' outputs='''{ "'$multisig'": 0.0019998 }''')`
+
+- `bitcoin-cli -testnet decodepsbt $psbt`
+- `bitcoin-cli -testnet analyzepsbt $psbt`
+  ```json
+  {
+    "inputs": [
+      {
+        "has_utxo": false,
+        "is_final": false,
+        "next": "updater"
+      },
+      {
+        "has_utxo": false,
+        "is_final": false,
+        "next": "updater"
+      }
+    ],
+    "next": "updater"
+  }```
+
+- `bitcoin-cli -testnet walletprocesspsbt $psbt` 
+  ```json
+  {
+    "psbt": "cHNidP8BAHsCAAAAAm+dbjpB2bt0L0gFHyQxLkNljXEMURWT42jYfPZmfbAlAAAAAAD9////CZNfXTTHd5HjWmPWz9HEy6RLL0jvi3/xrTmOYyF+zuIAAAAAAP3///8BLA0DAAAAAAAWABT62BbxyUB1z/J5jD9NB7sHhOfy2gAAAAAAAQB3AgAAAAFBRf5fL2aZbaNz1iZ+hvefn+yjF+00uaSETu3t/t57RQAAAAAA/f///wKghgEAAAAAABl2qRSlyaarbwiYAGPznnuuHoONUN3dRIisdcxvkAgAAAAZdqkU+5NfaQPUdMV7EdG0eBc0xZwEQCSIrN/QJgABB2pHMEQCIEcmYekd7GkvmTZqdk2JaO8mQqYZDxwI8eqw0TThMVIeAiAFiaU6osJ98iS94ZeHiviwGhmLsNx6LAmDoNOkLmltBwEhA/jR5KLFiZGtelWgfR8VteWYSPBViKZaV9JmBku6hhHjAAEAdwIAAAABqPdWblSHDdlPVa2WhFeAsjzJAYDTYC3YBwnnIsIr7CQAAAAAAP3///8CoIYBAAAAAAAZdqkUpcmmq28ImABj8557rh6DjVDd3USIrI9AmUoCAAAAGXapFBnCNB7CJsd3/2sOkh6ehXoRQuVbiKxL0SYAAQdqRzBEAiBinkA59k6khbkwy7NONzbggMSRn/vLoc7x7nJMjX2WNQIgBLZutfK7pgUH5NtuBIqkHf3OmbLp1g3Qt2+bHwQI1joBIQP40eSixYmRrXpVoH0fFbXlmEjwVYimWlfSZgZLuoYR4wAiAgOcb0kjfcB86PvdFAhT2Rmbe9D1v0fCROJVB27jvhBTxBiYgaI7VAAAgAEAAIAAAACAAAAAAAYAAAAA",
+    "complete": true,
+    "hex": "02000000026f9d6e3a41d9bb742f48051f24312e43658d710c511593e368d87cf6667db025000000006a4730440220472661e91dec692f99366a764d8968ef2642a6190f1c08f1eab0d134e131521e02200589a53aa2c27df224bde197878af8b01a198bb0dc7a2c0983a0d3a42e696d07012103f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3fdffffff09935f5d34c77791e35a63d6cfd1c4cba44b2f48ef8b7ff1ad398e63217ecee2000000006a4730440220629e4039f64ea485b930cbb34e3736e080c4919ffbcba1cef1ee724c8d7d9635022004b66eb5f2bba60507e4db6e048aa41dfdce99b2e9d60dd0b76f9b1f0408d63a012103f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3fdffffff012c0d030000000000160014fad816f1c94075cff2798c3f4d07bb0784e7f2da00000000"
+  }
+  ```
+
+- `psbt_p="cHNidP8BAHsCAAAAAm+dbjpB2bt0L0gFHyQxLkNljXEMURWT42jYfPZmfbAlAAAAAAD9////CZNfXTTHd5HjWmPWz9HEy6RLL0jvi3/xrTmOYyF+zuIAAAAAAP3///8BLA0DAAAAAAAWABT62BbxyUB1z/J5jD9NB7sHhOfy2gAAAAAAAQB3AgAAAAFBRf5fL2aZbaNz1iZ+hvefn+yjF+00uaSETu3t/t57RQAAAAAA/f///wKghgEAAAAAABl2qRSlyaarbwiYAGPznnuuHoONUN3dRIisdcxvkAgAAAAZdqkU+5NfaQPUdMV7EdG0eBc0xZwEQCSIrN/QJgABB2pHMEQCIEcmYekd7GkvmTZqdk2JaO8mQqYZDxwI8eqw0TThMVIeAiAFiaU6osJ98iS94ZeHiviwGhmLsNx6LAmDoNOkLmltBwEhA/jR5KLFiZGtelWgfR8VteWYSPBViKZaV9JmBku6hhHjAAEAdwIAAAABqPdWblSHDdlPVa2WhFeAsjzJAYDTYC3YBwnnIsIr7CQAAAAAAP3///8CoIYBAAAAAAAZdqkUpcmmq28ImABj8557rh6DjVDd3USIrI9AmUoCAAAAGXapFBnCNB7CJsd3/2sOkh6ehXoRQuVbiKxL0SYAAQdqRzBEAiBinkA59k6khbkwy7NONzbggMSRn/vLoc7x7nJMjX2WNQIgBLZutfK7pgUH5NtuBIqkHf3OmbLp1g3Qt2+bHwQI1joBIQP40eSixYmRrXpVoH0fFbXlmEjwVYimWlfSZgZLuoYR4wAiAgOcb0kjfcB86PvdFAhT2Rmbe9D1v0fCROJVB27jvhBTxBiYgaI7VAAAgAEAAIAAAACAAAAAAAYAAAAA"` on machine2
+- `psbt_f=$(bitcoin-cli -testnet walletprocesspsbt $psbt_p | jq -r '.psbt')`
+- `psbt_hex=$(bitcoin-cli -testnet finalizepsbt $psbt_f | jq -r '.hex')`
+- `multisig_txid=$(bitcoin-cli -testnet -named sendrawtransaction hexstring=$psbt_hex)`
