@@ -1109,3 +1109,105 @@
 - `signedtx=$(bitcoin-cli -testnet -named signrawtransactionwithwallet hexstring=$rawtxhex | jq -r '.hex')`
 - `bitcoin-cli -testnet -named sendrawtransaction hexstring=$signedtx`
 
+#### Understanding the Foundation of Transactions
+
+- `utxo_txid=$(bitcoin-cli -testnet listunspent | jq -r '.[1] | .txid')`
+- `utxo_vout=$(bitcoin-cli -testnet listunspent | jq -r '.[1] | .vout')`
+- `recipient=$(bitcoin-cli -testnet -named getrawchangeaddress address_type=legacy)`
+- `rawtxhex=$(bitcoin-cli -testnet -named createrawtransaction inputs='''[ { "txid": "'$utxo_txid'", "vout": '$utxo_vout' } ]''' outputs='''{ "'$recipient'": 0.0009 }''')`
+- `signedtx=$(bitcoin-cli -testnet -named signrawtransactionwithwallet hexstring=$rawtxhex | jq -r '.hex')`
+- `bitcoin-cli -testnet -named decoderawtransaction hexstring=$signedtx`
+  ```json
+  {
+    "txid": "a1b8ad9de75137ed64679ffacc3751ef5806075e09cb30d378e04b069609db79",
+    "hash": "a1b8ad9de75137ed64679ffacc3751ef5806075e09cb30d378e04b069609db79",
+    "version": 2,
+    "size": 191,
+    "vsize": 191,
+    "weight": 764,
+    "locktime": 0,
+    "vin": [
+      {
+        "txid": "ef8814334be43fcf3d060a86868bbb9383b72bc9e9841ac1db04493edc45355c",
+        "vout": 1,
+        "scriptSig": {
+          "asm": "304402202c059160674162ea445bd5ee039b2e6e090a5c8cd68f267e2d6b1f6d8987421b022027501f2d2673d9768d2a373c6913c3a2f005ed2b45d199024d61420bd23650a2[ALL] 03f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3",
+          "hex": "47304402202c059160674162ea445bd5ee039b2e6e090a5c8cd68f267e2d6b1f6d8987421b022027501f2d2673d9768d2a373c6913c3a2f005ed2b45d199024d61420bd23650a2012103f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3"
+        },
+        "sequence": 4294967293
+      }
+    ],
+    "vout": [
+      {
+        "value": 0.00090000,
+        "n": 0,
+        "scriptPubKey": {
+          "asm": "OP_DUP OP_HASH160 c03b4d65296b2542d13432280d4036f6d97c505c OP_EQUALVERIFY OP_CHECKSIG",
+          "desc": "addr(my3P5HP2rMPuXyPiJAinAZHPCxEmNF1wuA)#3jxdcs5g",
+          "hex": "76a914c03b4d65296b2542d13432280d4036f6d97c505c88ac",
+          "address": "my3P5HP2rMPuXyPiJAinAZHPCxEmNF1wuA",
+          "type": "pubkeyhash"
+        }
+      }
+    ]
+  }
+  ``
+
+#### Scripting a P2PKH
+
+- `hex=$(bitcoin-cli -testnet -named gettransaction txid="ef8814334be43fcf3d060a86868bbb9383b72bc9e9841ac1db04493edc45355c" | jq -r '.hex')`
+- `bitcoin-cli -testnet -named decoderawtransaction hexstring=$hex`
+  ```json
+  {
+    "txid": "ef8814334be43fcf3d060a86868bbb9383b72bc9e9841ac1db04493edc45355c",
+    "hash": "7b462cb5ea33da425c8137f96c37010e4dacba929e518a48460f0e8340593415",
+    "version": 2,
+    "size": 228,
+    "vsize": 147,
+    "weight": 585,
+    "locktime": 2547148,
+    "vin": [
+      {
+        "txid": "b52d5170b4e63fe80b45de11312b3c5e58e644a18eb950716760e4a3ca2eb920",
+        "vout": 1,
+        "scriptSig": {
+          "asm": "",
+          "hex": ""
+        },
+        "txinwitness": [
+          "30440220399a8cdd4549e52a399b481179b49a3ddb21a14e73d56ea99bec0db4d43476e1022064cc73c9001528ba9f1de056e6657fd92226215160dd1d97fdc830ee3326c20601",
+          "03939495de9bea9ad95eb72cadb6fbbaeeb6aa2db1e017abd7e400d6d42a7e670c"
+        ],
+        "sequence": 4294967293
+      }
+    ],
+    "vout": [
+      {
+        "value": 98.12745764,
+        "n": 0,
+        "scriptPubKey": {
+          "asm": "OP_DUP OP_HASH160 8218e133bcb7f61f3c41a8054684ca43c8441adb OP_EQUALVERIFY OP_CHECKSIG",
+          "desc": "addr(msNqwfSPw71fAWdMbTpHtPh1N7o6qAnzqv)#ncjutp4j",
+          "hex": "76a9148218e133bcb7f61f3c41a8054684ca43c8441adb88ac",
+          "address": "msNqwfSPw71fAWdMbTpHtPh1N7o6qAnzqv",
+          "type": "pubkeyhash"
+        }
+      },
+      {
+        "value": 0.00100000,
+        "n": 1,
+        "scriptPubKey": {
+          "asm": "OP_DUP OP_HASH160 a5c9a6ab6f08980063f39e7bae1e838d50dddd44 OP_EQUALVERIFY OP_CHECKSIG",
+          "desc": "addr(mvdZMfdZVLPogTfM35pDZNapx52TGwJ7Eu)#s5ce2mu3",
+          "hex": "76a914a5c9a6ab6f08980063f39e7bae1e838d50dddd4488ac",
+          "address": "mvdZMfdZVLPogTfM35pDZNapx52TGwJ7Eu",
+          "type": "pubkeyhash"
+        }
+      }
+    ]
+  }
+  ```
+
+- `btcdeb '[304402202c059160674162ea445bd5ee039b2e6e090a5c8cd68f267e2d6b1f6d8987421b022027501f2d2673d9768d2a373c6913c3a2f005ed2b45d199024d61420bd23650a2 03f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3 OP_DUP OP_HASH160 a5c9a6ab6f08980063f39e7bae1e838d50dddd44 OP_EQUALVERIFY OP_CHECKSIG]'` 用本次交易的vins中的scriptSig里的asm中的前半部分([ALL]前面)当成私签名， 后半部分为公钥，连接上一次对应的vout中的scriptPubKey中的asm字段内容形成解锁脚本
+
+
