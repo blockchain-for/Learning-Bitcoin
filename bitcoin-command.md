@@ -1211,3 +1211,11 @@
 - `btcdeb '[304402202c059160674162ea445bd5ee039b2e6e090a5c8cd68f267e2d6b1f6d8987421b022027501f2d2673d9768d2a373c6913c3a2f005ed2b45d199024d61420bd23650a2 03f8d1e4a2c58991ad7a55a07d1f15b5e59848f05588a65a57d266064bba8611e3 OP_DUP OP_HASH160 a5c9a6ab6f08980063f39e7bae1e838d50dddd44 OP_EQUALVERIFY OP_CHECKSIG]'` 用本次交易的vins中的scriptSig里的asm中的前半部分([ALL]前面)当成私签名， 后半部分为公钥，连接上一次对应的vout中的scriptPubKey中的asm字段内容形成解锁脚本
 
 
+#### Understand a P2SH-Segwit Script
+- `bitcoin-cli -testnet getnewaddress -addresstype p2sh-segwit`
+  `2MsyMNBAkrrtHsYz9nWWWWCyE3GbVEEFjTe` 测试网地址以 `2` 开头，主网以 `3` 开头
+
+#### Writing Puzzle Scripts
+
+- `3x + 7 = 13` `OP_DUP OP_DUP OP_ADD OP_ADD 7 OP_ADD 13 OP_EQUAL`
+- `btcdeb '[2 OP_DUP OP_DUP OP_ADD OP_ADD 7 OP_ADD 13 OP_EQUAL]'` when `x` is `2`
