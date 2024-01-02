@@ -6,7 +6,8 @@ Everything about Bitcoin
 
 - [Bitcoin Command](./bitcoin-command.md)
 
+- [BDK-cli](./bdk-cli.md)
 
 ## References:
 - [Learning Bitcoin from the Command Line](https://github.com/BlockchainCommons/Learning-Bitcoin-from-the-Command-Line)
-- 
+- [Bit Dev Kit](https://bitcoindevkit.org/)
