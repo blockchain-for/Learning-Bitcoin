@@ -10,4 +10,4 @@ Everything about Bitcoin
 
 ## References:
 - [Learning Bitcoin from the Command Line](https://github.com/BlockchainCommons/Learning-Bitcoin-from-the-Command-Line)
-- [Bit Dev Kit](https://bitcoindevkit.org/)
+- [Bitcoin Dev Kit](https://bitcoindevkit.org/)
