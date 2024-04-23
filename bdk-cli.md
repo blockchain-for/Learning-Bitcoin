@@ -11,6 +11,9 @@
     "xprv": "tprv8ZgxMBicQKsPdu21KoXBBGHffZYcAva2istupSaWTR4nCQe5yZAAEo9mpJo7swpVNCA4dFHyKfCuHkTSaBHDpDTKZHSZ8JG7aR92rUX44ks"
   }
   ```
+
+  - `export XPRV_00=$(cat key.json | jq -r .xprv)`
+- 
 - `env | rg XPRV`
   `XPRV_00=tprv8ZgxMBicQKsPdu21KoXBBGHffZYcAva2istupSaWTR4nCQe5yZAAEo9mpJo7swpVNCA4dFHyKfCuHkTSaBHDpDTKZHSZ8JG7aR92rUX44ks`
 
