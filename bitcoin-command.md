@@ -56,6 +56,8 @@
 - `bitcoin-cli getnewaddress`
   `bc1qdzr25fzawj55jkzdg86kh8l7sdg7pcdcl95afk`
 - `bitcoin-cli getaddressinfo bc1qdzr25fzawj55jkzdg86kh8l7sdg7pcdcl95afk`
+  
+- `bitcoin-cli listaddressgroupings` 分组地址列表
     
 - `bitcoin-cli -testnet getnewaddress --addresstype legacy` 创建早期`legacy` （P2PKH)格式地址，测试网一般是 `m` 或 `n` 开头，主网以 `1` 开头，P2SH地址一般是 `3` 开头
     
@@ -74,6 +76,9 @@
 - `bitcoin-cli -testnet dumpprivkey "mvdZMfdZVLPogTfM35pDZNapx52TGwJ7Eu"` 导出指定 legacy 地址的私钥
 - `bitcoin-cli -testnet importprivkey cW4s4MdW7BkUmqiKgYzSJdmvnzq8QDrf6gszPMC7eLmfcdoRHtHh` 导入私钥
    
+#### Generate blocks
+- `bitcoin-cli generatetoaddress 1 bc1qdzr25fzawj55jkzdg86kh8l7sdg7pcdcl95afk`  # Generate 1 blocks to the given address
+  
 #### Command Variables：
 
 - `unset NEW_ADDRESS_01` 生成一个没赋值的变量
@@ -100,6 +105,8 @@
 - `bitcoin-cli -testnet listtransactions` 列出本地钱包经手的交易
 - `bitcoin-cli -testnet listunspent` 列出没花费的交易
 - `bitcoin-cli -testnet gettransaction 'b00de623fefd5a7ae90a6926912f35aef658f0c49dfd0ef80f5eed8b0c75b01f'` 查看指定交易id的交易明细
+- `bitcoin-cli -conf=$(pwd)/bitcoin.conf getrawtransaction 'b132d47c2b4a44f2a32f9ea53be739febdf0c079f8820b20eb60ddc0a46f1aaa' 1` 查看非本地钱包的交易，注意最后加一个以参数 `1`
+  
   ```json
   {
     "amount": 0.00100000,
