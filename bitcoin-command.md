@@ -43,6 +43,35 @@
 - `curl -s [https://blockchain.info/q/getblockcount](https://blockchain.info/q/getblockcount)`获取主网区块当前高度
 - `bitcoin-cli help [command]` 查看bitcoin-cli 命令帮助
 - `bitcoin-cli -testnet -getinfo` 查看testnet 信息
+- ` ./bin/bitcoin-cli -conf=$(pwd)/bitcoin.conf getblockhash 210000`
+   000000000000048b95347e83192f69cf0366076336c639f9b7228e9ba171342e
+- `bitcoin-cli getblock   000000000000048b95347e83192f69cf0366076336c639f9b7228e9ba171342e false`
+  
+- `./bin/bitcoin-cli -conf=$(pwd)/bitcoin.conf getblockheader 000000000000048b95347e83192f69cf0366076336c639f9b7228e9ba171342e`  - 其中 bits 是目标难度 (target) 的紧凑格式 (compact format), 可以把 bits 转为 target，例如 `1a04e0ea` 即是 `00000000000004e0ea0000000000000000000000000000000000000000000000`，[计算](https://learnmeabitcoin.com/technical/blockchain/51-attack/)
+
+```
+  {
+    "hash": "000000000000048b95347e83192f69cf0366076336c639f9b7228e9ba171342e",
+    "confirmations": 14069,
+    "height": 210000,
+    "version": 2,
+    "versionHex": "00000002",
+    "merkleroot": "3cdd40a60823b1c7356d0987078e9426724c5b3ab439c2d80ad2bdd620e603d8",
+    "time": 1354116278,
+    "mediantime": 1354112757,
+    "nonce": 4069828196,
+    "bits": "1a04e0ea",
+    "difficulty": 3438908.960159138,
+    "chainwork": "00000000000000000000000000000000000000000000002218a01c35910b0060",
+    "nTx": 457,
+    "previousblockhash": "00000000000000f3819164645360294b5dee7f2e846001ac9f41a70b7a9a3de1",
+    "nextblockhash": "0000000000000198b7aa4172cdd1e5d80207535da5a2d4acd80242c07729dc21"
+  }
+```
+
+
+- `./bin/bitcoin-cli -conf=$(pwd)/bitcoin.conf getchaintips` - [查找 reorg 的区块](https://learnmeabitcoin.com/technical/blockchain/chain-reorganisation/)
+
    
 #### Wallets
 
