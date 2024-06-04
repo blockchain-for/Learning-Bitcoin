@@ -13,3 +13,4 @@ Everything about Bitcoin
 - [Bitcoin Dev Kit](https://bitcoindevkit.org/)
 - [10x Security Bitcoin Guide](https://btcguide.github.io/)
 - [21 Ways To Look At Bitcoin](https://21-ways.com/)
+- [A developer-oriented series about Bitcoin](https://davidederosa.com/basic-blockchain-programming/)

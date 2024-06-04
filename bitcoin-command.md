@@ -72,6 +72,8 @@
 
 - `./bin/bitcoin-cli -conf=$(pwd)/bitcoin.conf getchaintips` - [查找 reorg 的区块](https://learnmeabitcoin.com/technical/blockchain/chain-reorganisation/)
 
+- `./bin//bitcoin-cli -conf=$(pwd)/bitcoin.conf -datadir=$(pwd)/data getmempoolinfo` - 查看 mempool 信息
+- `./bin//bitcoin-cli -conf=$(pwd)/bitcoin.conf -datadir=$(pwd)/data gettxoutsetinfo` - 查看 utxos 信息
    
 #### Wallets
 
