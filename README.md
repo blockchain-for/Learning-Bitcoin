@@ -14,3 +14,4 @@ Everything about Bitcoin
 - [10x Security Bitcoin Guide](https://btcguide.github.io/)
 - [21 Ways To Look At Bitcoin](https://21-ways.com/)
 - [A developer-oriented series about Bitcoin](https://davidederosa.com/basic-blockchain-programming/)
+- [Learn me a bitcoin](https://learnmeabitcoin.com/) - A great bitcoin study resource for Bitcoin in 2024
