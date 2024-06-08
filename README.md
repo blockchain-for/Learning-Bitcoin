@@ -8,6 +8,8 @@ Everything about Bitcoin
 
 - [BDK-cli](./bdk-cli.md)
 
+- [How to build a segwit signature](./how-to-build-a-segwit-signature.md)
+
 ## References:
 - [Learning Bitcoin from the Command Line](https://github.com/BlockchainCommons/Learning-Bitcoin-from-the-Command-Line)
 - [Bitcoin Dev Kit](https://bitcoindevkit.org/)
